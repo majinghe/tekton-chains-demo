@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-docker-image
+spec:
+  params:
+    - name: image-tag
+      type: string
+  resources:
+    inputs:
+      - name: source-code
+        type: git
+    outputs:
+      - name: docker-image
+        type: image
+  steps:
+    - name: image-build-and-push
+      image: gcr.io/kaniko-project/executor:v1.7.0
+      env:
+        - name: "DOCKER_CONFIG"
+          value: "/tekton/home/.docker/"
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=$(resources.inputs.source-code.path)/Dockerfile
+        - --destination=$(resources.outputs.docker-image.url):$(params.image-tag)
+        - --context=$(resources.inputs.source-code.path)
